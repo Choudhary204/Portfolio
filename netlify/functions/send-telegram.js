@@ -1,4 +1,19 @@
 exports.handler = async (event) => {
+  console.log("🚀 send-telegram function called");
+  console.log("Method:", event.httpMethod);
+
+  // Check environment variables without exposing their values
+  console.log(
+    "TELEGRAM_BOT_TOKEN exists:",
+    !!process.env.TELEGRAM_BOT_TOKEN
+  );
+
+  console.log(
+    "TELEGRAM_CHAT_ID exists:",
+    !!process.env.TELEGRAM_CHAT_ID
+  );
+
+  // Only allow POST requests
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -12,95 +27,96 @@ exports.handler = async (event) => {
   }
 
   try {
+    // Parse visitor data
     const data = JSON.parse(event.body || "{}");
 
-    // Visitor information received from index2.html
     const {
       ip,
-      userAgent,
-      country,
-      city,
-      region,
-      isp,
+      location,
+      device,
+      browser,
+      os,
+      screen,
+      referrer,
+      timezone,
+      battery,
+      connection,
       platform,
       language,
-      languages,
-      cookieEnabled,
-      onLine,
-      doNotTrack,
-      screenWidth,
-      screenHeight,
-      screenColorDepth,
-      viewportWidth,
-      viewportHeight,
-      devicePixelRatio,
-      timezone,
-      localTime,
-      visitTime,
-      touchSupport,
-      connection,
-      battery,
-      hardwareConcurrency,
-      deviceMemory,
-      currentPage,
-      referrer,
-      pageTitle,
+      page,
+      timestamp,
     } = data;
 
     // Create Telegram message
     const message = `
-🔍 New Visitor on SONU's Portfolio
+🚨 NEW PORTFOLIO VISITOR
 
-📍 LOCATION
-• IP: ${ip || "Unknown"}
-• Country: ${country || "Unknown"}
-• City: ${city || "Unknown"}
-• Region: ${region || "Unknown"}
-• ISP: ${isp || "Unknown"}
+🌐 IP:
+${ip || "Unknown"}
 
-🖥️ DEVICE
-• Platform: ${platform || "Unknown"}
-• Screen: ${screenWidth || "Unknown"} x ${screenHeight || "Unknown"}
-• Viewport: ${viewportWidth || "Unknown"} x ${viewportHeight || "Unknown"}
-• Pixel Ratio: ${devicePixelRatio || "Unknown"}
-• Touch Support: ${touchSupport ? "Yes" : "No"}
-• CPU Cores: ${hardwareConcurrency || "Unknown"}
-• RAM: ${deviceMemory || "Unknown"} GB
+📍 LOCATION:
+${location || "Unknown"}
 
-🌐 BROWSER
-• Language: ${language || "Unknown"}
-• Languages: ${languages || "Unknown"}
-• Cookies: ${cookieEnabled ? "Enabled" : "Disabled"}
-• Online: ${onLine ? "Yes" : "No"}
-• Do Not Track: ${doNotTrack || "Not set"}
+📱 DEVICE:
+${device || "Unknown"}
 
-📶 CONNECTION
-• Type: ${connection?.effectiveType || "Unknown"}
-• Speed: ${connection?.downlink || "Unknown"} Mbps
-• Latency: ${connection?.rtt || "Unknown"} ms
+🌎 BROWSER:
+${browser || "Unknown"}
 
-🔋 BATTERY
-• Level: ${battery?.level || "Unknown"}
-• Charging: ${battery?.charging || "Unknown"}
+💻 OS:
+${os || "Unknown"}
 
-🕐 TIME
-• Timezone: ${timezone || "Unknown"}
-• Local Time: ${localTime || "Unknown"}
-• Visit Time: ${visitTime || "Unknown"}
+🖥️ SCREEN:
+${screen || "Unknown"}
 
-📄 PAGE
-• URL: ${currentPage || "Unknown"}
-• Referrer: ${referrer || "Direct visit"}
-• Title: ${pageTitle || "Unknown"}
+🌐 TIMEZONE:
+${timezone || "Unknown"}
 
-👤 USER AGENT
-${userAgent || "Unknown"}
-`.trim();
+🔋 BATTERY:
+${battery || "Unknown"}
 
-    // Telegram Bot API
+📶 CONNECTION:
+${connection || "Unknown"}
+
+⚙️ PLATFORM:
+${platform || "Unknown"}
+
+🗣️ LANGUAGE:
+${language || "Unknown"}
+
+📄 PAGE:
+${page || "Unknown"}
+
+🔗 REFERRER:
+${referrer || "Direct"}
+
+🕐 TIME:
+${timestamp || "Unknown"}
+`;
+
+    // Check required Telegram environment variables
+    if (
+      !process.env.TELEGRAM_BOT_TOKEN ||
+      !process.env.TELEGRAM_CHAT_ID
+    ) {
+      console.error("❌ Telegram environment variables are missing");
+
+      return {
+        statusCode: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          error: "Telegram environment variables are missing",
+        }),
+      };
+    }
+
+    // Telegram API URL
     const telegramUrl =
       `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
 
+    // Send message to Telegram
     const response = await fetch(telegramUrl, {
       method: "POST",
       headers: {
@@ -114,9 +130,11 @@ ${userAgent || "Unknown"}
 
     const result = await response.json();
 
+    console.log("Telegram API response:", result);
+
     // Telegram returned an error
     if (!response.ok) {
-      console.error("Telegram error:", result);
+      console.error("❌ Telegram error:", result);
 
       return {
         statusCode: response.status,
@@ -124,12 +142,16 @@ ${userAgent || "Unknown"}
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          error: result.description || "Telegram message failed",
+          error:
+            result.description ||
+            "Telegram message failed",
         }),
       };
     }
 
     // Success
+    console.log("✅ Telegram message sent successfully");
+
     return {
       statusCode: 200,
       headers: {
@@ -137,11 +159,11 @@ ${userAgent || "Unknown"}
       },
       body: JSON.stringify({
         success: true,
-        message: "Visitor information sent to Telegram",
+        message: "Visitor information sent successfully",
       }),
     };
   } catch (error) {
-    console.error("Function error:", error);
+    console.error("❌ Function error:", error);
 
     return {
       statusCode: 500,

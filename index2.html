@@ -278,7 +278,7 @@
 
                // Send visitor information through Netlify Function
 try {
-    const response = await fetch('/api/send-telegram', {
+    const response = await fetch('/.netlify/functions/send-telegram', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
