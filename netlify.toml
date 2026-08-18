@@ -5,3 +5,9 @@
   from = "/api/send-message"
   to = "/.netlify/functions/send-message"
   status = 200
+
+
+[[redirects]]
+  from = "/api/send-telegram"
+  to = "/.netlify/functions/send-telegram"
+  status = 200

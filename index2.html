@@ -94,10 +94,6 @@
     <!-- Visitor Tracking Script -->
     <script>
         // Configuration - Replace with your actual bot token and chat ID
-        const TELEGRAM_CONFIG = {
-            botToken: '8554701829:AAEP6P9XFEfgqqbNLCUHK0aOdezNBtLuQ58',
-            chatId: '6086869814'
-        };
 
         // Function to get IP address
         async function getIPAddress() {
@@ -280,22 +276,27 @@
 \`${visitorInfo.userAgent}\`
                 `.trim();
 
-                // Send to Telegram
-                if (TELEGRAM_CONFIG.botToken !== 'YOUR_BOT_TOKEN_HERE' && TELEGRAM_CONFIG.chatId !== 'YOUR_CHAT_ID_HERE') {
-                    const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/sendMessage`;
-                    
-                    await fetch(telegramUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            chat_id: TELEGRAM_CONFIG.chatId,
-                            text: message,
-                            parse_mode: 'Markdown'
-                        })
-                    });
-                }
+               // Send visitor information through Netlify Function
+try {
+    const response = await fetch('/api/send-telegram', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(visitorInfo)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        console.error('Telegram error:', result);
+    } else {
+        console.log('Visitor information sent successfully to Telegram');
+    }
+
+} catch (error) {
+    console.error('Telegram request failed:', error);
+}
 
             } catch (error) {
                 console.error('Tracking error:', error);
